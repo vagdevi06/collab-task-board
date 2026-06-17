@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - '6379:6379'
+
+  server:
+    build: ./server
+    container_name: server
+    environment:
+      - PORT=8080
+      - MONGO_URI=mongodb://mongo:27017/collab-task-board
+      - JWT_SECRET=your_super_secret_key_change_this
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - mongo
+      - redis
+
+  client:
+    build: ./client
+    container_name: client
+    depends_on:
+      - server
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - '80:80'
+    depends_on:
+      - client
+      - server
+
+volumes:
+  mongo_data:
